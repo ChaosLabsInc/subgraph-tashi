@@ -300,7 +300,9 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   if (marketRepayToken == null) {
     marketRepayToken = createMarket(event.address.toHexString());
   }
-  let marketCTokenLiquidated = Market.load(event.params.qiTokenCollateral.toHexString());
+  let marketCTokenLiquidated = Market.load(
+    event.params.qiTokenCollateral.toHexString()
+  );
   let mintID = event.transaction.hash
     .toHexString()
     .concat("-")
@@ -323,7 +325,7 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   liquidation.blockTime = event.block.timestamp.toI32();
   liquidation.underlyingSymbol = marketRepayToken.underlyingSymbol;
   liquidation.underlyingRepayAmount = underlyingRepayAmount;
-  liquidation.cTokenSymbol = marketCTokenLiquidated.symbol;
+  liquidation.cTokenSymbol = marketCTokenLiquidated!.symbol;
   liquidation.save();
 }
 
@@ -347,12 +349,20 @@ export function handleTransfer(event: Transfer): void {
   // with normal transfers, since mint, redeem, and seize transfers will already run updateMarket()
   let marketID = event.address.toHexString();
   let market = Market.load(marketID);
-  if (market.accrualBlockNumber != event.block.number.toI32()) {
-    market = updateMarket(event.address, event.block.number.toI32(), event.block.timestamp.toI32());
+  if (market!.accrualBlockNumber != event.block.number.toI32()) {
+    market = updateMarket(
+      event.address,
+      event.block.number.toI32(),
+      event.block.timestamp.toI32()
+    );
   }
 
-  let amountUnderlying = market.exchangeRate.times(event.params.amount.toBigDecimal().div(cTokenDecimalsBD));
-  let amountUnderlyingTruncated = amountUnderlying.truncate(market.underlyingDecimals);
+  let amountUnderlying = market!.exchangeRate.times(
+    event.params.amount.toBigDecimal().div(cTokenDecimalsBD)
+  );
+  let amountUnderlyingTruncated = amountUnderlying.truncate(
+    market!.underlyingDecimals
+  );
 
   // Checking if the tx is FROM the cToken contract (i.e. this will not run when minting)
   // If so, it is a mint, and we don't need to run these calculations
@@ -366,8 +376,8 @@ export function handleTransfer(event: Transfer): void {
     // Update cTokenStats common for all events, and return the stats to update unique
     // values for each event
     let cTokenStatsFrom = updateCommonCTokenStats(
-      market.id,
-      market.symbol,
+      market!.id,
+      market!.symbol,
       accountFromID,
       event.transaction.hash,
       event.block.timestamp,
@@ -382,7 +392,9 @@ export function handleTransfer(event: Transfer): void {
         .truncate(cTokenDecimals)
     );
 
-    cTokenStatsFrom.totalUnderlyingRedeemed = cTokenStatsFrom.totalUnderlyingRedeemed.plus(amountUnderlyingTruncated);
+    cTokenStatsFrom.totalUnderlyingRedeemed = cTokenStatsFrom.totalUnderlyingRedeemed.plus(
+      amountUnderlyingTruncated
+    );
     cTokenStatsFrom.save();
   }
 
@@ -400,8 +412,8 @@ export function handleTransfer(event: Transfer): void {
     // Update cTokenStats common for all events, and return the stats to update unique
     // values for each event
     let cTokenStatsTo = updateCommonCTokenStats(
-      market.id,
-      market.symbol,
+      market!.id,
+      market!.symbol,
       accountToID,
       event.transaction.hash,
       event.block.timestamp,
@@ -416,7 +428,9 @@ export function handleTransfer(event: Transfer): void {
         .truncate(cTokenDecimals)
     );
 
-    cTokenStatsTo.totalUnderlyingSupplied = cTokenStatsTo.totalUnderlyingSupplied.plus(amountUnderlyingTruncated);
+    cTokenStatsTo.totalUnderlyingSupplied = cTokenStatsTo.totalUnderlyingSupplied.plus(
+      amountUnderlyingTruncated
+    );
     cTokenStatsTo.save();
   }
 
@@ -431,19 +445,23 @@ export function handleTransfer(event: Transfer): void {
   transfer.from = event.params.from;
   transfer.blockNumber = event.block.number.toI32();
   transfer.blockTime = event.block.timestamp.toI32();
-  transfer.cTokenSymbol = market.symbol;
+  transfer.cTokenSymbol = market!.symbol;
   transfer.save();
 }
 
 export function handleAccrueInterest(event: AccrueInterest): void {
-  updateMarket(event.address, event.block.number.toI32(), event.block.timestamp.toI32());
+  updateMarket(
+    event.address,
+    event.block.number.toI32(),
+    event.block.timestamp.toI32()
+  );
 }
 
 export function handleNewReserveFactor(event: NewReserveFactor): void {
   let marketID = event.address.toHex();
   let market = Market.load(marketID);
-  market.reserveFactor = event.params.newReserveFactorMantissa.toBigDecimal();
-  market.save();
+  market!.reserveFactor = event.params.newReserveFactorMantissa.toBigDecimal();
+  market!.save();
 }
 
 export function handleNewMarketInterestRateModel(event: NewMarketInterestRateModel): void {

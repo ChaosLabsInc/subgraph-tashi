@@ -27,9 +27,11 @@ function getTokenPrice(
   underlyingDecimals: i32
 ): BigDecimal {
   let comptroller = Comptroller.load("1");
-  let oracleAddress = comptroller.priceOracle as Address;
+  let oracleAddress = comptroller!.priceOracle as Address;
   let underlyingPrice: BigDecimal;
-  let priceOracle1Address = Address.fromString("02557a5e05defeffd4cae6d83ea3d173b272c904");
+  let priceOracle1Address = Address.fromString(
+    "02557a5e05defeffd4cae6d83ea3d173b272c904"
+  );
 
   /* PriceOracle2 is used at the block the Comptroller starts using it.
    * see here https://etherscan.io/address/0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b#events
@@ -52,7 +54,9 @@ function getTokenPrice(
     let oracle2 = PriceOracle2.bind(oracleAddress);
     let tryPrice = oracle2.try_getUnderlyingPrice(eventAddress);
 
-    underlyingPrice = tryPrice.reverted ? zeroBD : tryPrice.value.toBigDecimal().div(bdFactor);
+    underlyingPrice = tryPrice.reverted
+      ? zeroBD
+      : tryPrice.value.toBigDecimal().div(bdFactor);
 
     /* PriceOracle(1) is used (only for the first ~100 blocks of Comptroller. Annoying but we must
      * handle this. We use it for more than 100 blocks, see reason at top of if statement
@@ -76,8 +80,10 @@ function getTokenPrice(
 // @ts-ignore
 function getUSDCpriceETH(blockNumber: i32): BigDecimal {
   let comptroller = Comptroller.load("1");
-  let oracleAddress = comptroller.priceOracle as Address;
-  let priceOracle1Address = Address.fromString("02557a5e05defeffd4cae6d83ea3d173b272c904");
+  let oracleAddress = comptroller!.priceOracle as Address;
+  let priceOracle1Address = Address.fromString(
+    "02557a5e05defeffd4cae6d83ea3d173b272c904"
+  );
   let USDCAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 ";
   let usdPrice: BigDecimal;
 
@@ -86,9 +92,13 @@ function getUSDCpriceETH(blockNumber: i32): BigDecimal {
     let oracle2 = PriceOracle2.bind(oracleAddress);
     let mantissaDecimalFactorUSDC = 18 - 6 + 18;
     let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC);
-    let tryPrice = oracle2.try_getUnderlyingPrice(Address.fromString(cUSDCAddress));
+    let tryPrice = oracle2.try_getUnderlyingPrice(
+      Address.fromString(cUSDCAddress)
+    );
 
-    usdPrice = tryPrice.reverted ? zeroBD : tryPrice.value.toBigDecimal().div(bdFactorUSDC);
+    usdPrice = tryPrice.reverted
+      ? zeroBD
+      : tryPrice.value.toBigDecimal().div(bdFactorUSDC);
   } else {
     let oracle1 = PriceOracle.bind(priceOracle1Address);
     usdPrice = oracle1
@@ -108,7 +118,10 @@ export function createMarket(marketAddress: string): Market {
   let trySymbol = ctoken.try_symbol();
   let tryReserveFactorMantissa = ctoken.try_reserveFactorMantissa();
 
-  if (ctokenAddress == Address.fromString(QIAVAX_TOKEN_ADDRESS) && !tryReserveFactorMantissa.reverted) {
+  if (
+    ctokenAddress == Address.fromString(QIAVAX_TOKEN_ADDRESS) &&
+    !tryReserveFactorMantissa.reverted
+  ) {
     let token = getOrCreateToken(WAVAX_TOKEN_ADDRESS);
     token.save();
 
@@ -116,12 +129,20 @@ export function createMarket(marketAddress: string): Market {
     market.denomination = token.id;
     market.name = "Benqi AVAX";
     market.symbol = "qiAVAX";
-    market.reserveFactor = amountToDenomination(tryReserveFactorMantissa.value, MANTISSA_FACTOR);
+    market.reserveFactor = amountToDenomination(
+      tryReserveFactorMantissa.value,
+      MANTISSA_FACTOR
+    );
     market.save();
     return market;
   }
 
-  if (!tryDenomination.reverted && !tryName.reverted && !trySymbol.reverted && !tryReserveFactorMantissa.reverted) {
+  if (
+    !tryDenomination.reverted &&
+    !tryName.reverted &&
+    !trySymbol.reverted &&
+    !tryReserveFactorMantissa.reverted
+  ) {
     let token = getOrCreateToken(tryDenomination.value.toHexString());
     token.save();
 
@@ -129,7 +150,10 @@ export function createMarket(marketAddress: string): Market {
     market.denomination = token.id;
     market.name = tryName.value;
     market.symbol = trySymbol.value;
-    market.reserveFactor = amountToDenomination(tryReserveFactorMantissa.value, MANTISSA_FACTOR);
+    market.reserveFactor = amountToDenomination(
+      tryReserveFactorMantissa.value,
+      MANTISSA_FACTOR
+    );
     market.save();
     return market;
   }
@@ -146,10 +170,18 @@ export function getOrCreateToken(id: string): Token {
     let tokenContract = ERC20.bind(Address.fromString(id));
     token = new Token(id);
     token.address = Address.fromString(id);
-    token.name = tokenContract.try_name().reverted ? null : tokenContract.try_name().value;
-    token.symbol = tokenContract.try_symbol().reverted ? null : tokenContract.try_symbol().value;
-    token.decimals = tokenContract.try_decimals().reverted ? null : tokenContract.try_decimals().value;
-    token.totalSupply = tokenContract.try_totalSupply().reverted ? null : tokenContract.try_totalSupply().value;
+    token.name = tokenContract.try_name().reverted
+      ? "null"
+      : tokenContract.try_name().value;
+    token.symbol = tokenContract.try_symbol().reverted
+      ? "null"
+      : tokenContract.try_symbol().value;
+    token.decimals = tokenContract.try_decimals().reverted
+      ? null
+      : tokenContract.try_decimals().value;
+    token.totalSupply = tokenContract.try_totalSupply().reverted
+      ? new BigInt(0)
+      : tokenContract.try_totalSupply().value;
   }
   return token as Token;
 }
@@ -167,10 +199,10 @@ function getOrCreateMarket(id: string, token: Token): Market {
     market.reserveFactor = zeroBD;
     market.denomination = token.id;
     market.underlyingAddress = token.address;
-    market.underlyingName = token.name;
+    market.underlyingName = token.name!;
     market.underlyingDecimals = token.decimals;
     market.underlyingPrice = zeroBD;
-    market.underlyingSymbol = token.symbol;
+    market.underlyingSymbol = token.symbol!;
     market.underlyingPriceUSD = zeroBD;
     market.borrowRate = zeroBD;
     market.collateralFactor = zeroBD;
@@ -210,7 +242,9 @@ export function createMarketDEPRECATED(marketAddress: string): Market {
   // It is CETH, which has a slightly different interface
   if (marketAddress == cETHAddress) {
     market = new Market(marketAddress);
-    market.underlyingAddress = Address.fromString("0x0000000000000000000000000000000000000000");
+    market.underlyingAddress = Address.fromString(
+      "0x0000000000000000000000000000000000000000"
+    );
     market.underlyingDecimals = 18;
     market.underlyingPrice = BigDecimal.fromString("1");
     market.underlyingName = "Ether";
@@ -256,7 +290,10 @@ export function createMarketDEPRECATED(marketAddress: string): Market {
   market.accrualBlockNumber = 0;
   market.blockTimestamp = 0;
   market.borrowIndex = zeroBD;
-  market.reserveFactor = (reserveFactor.reverted ? BigInt.fromI32(0) : reserveFactor.value).toBigDecimal();
+  market.reserveFactor = (reserveFactor.reverted
+    ? BigInt.fromI32(0)
+    : reserveFactor.value
+  ).toBigDecimal();
 
   return market;
 }
@@ -265,11 +302,13 @@ export function createMarketDEPRECATED(marketAddress: string): Market {
 // @ts-ignore
 function getETHinUSD(blockNumber: i32): BigDecimal {
   let comptroller = Comptroller.load("1");
-  let oracleAddress = comptroller.priceOracle as Address;
+  let oracleAddress = comptroller!.priceOracle as Address;
   let oracle = PriceOracle2.bind(oracleAddress);
   let tryPrice = oracle.try_getUnderlyingPrice(Address.fromString(cETHAddress));
 
-  let ethPriceInUSD = tryPrice.reverted ? zeroBD : tryPrice.value.toBigDecimal().div(mantissaFactorBD);
+  let ethPriceInUSD = tryPrice.reverted
+    ? zeroBD
+    : tryPrice.value.toBigDecimal().div(mantissaFactorBD);
 
   return ethPriceInUSD;
 }

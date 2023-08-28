@@ -1,5 +1,5 @@
 {
-  "name": "benqi-v1-avalanche",
+  "name": "tashi-v1-evmos",
   "license": "MIT",
   "scripts": {
     "codegen": "npx graph codegen --output-dir src/types/",
@@ -10,7 +10,7 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 token-terminal/benqi-v1-avalanche"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.20.1",
-    "@graphprotocol/graph-ts": "0.20.0"
+    "@graphprotocol/graph-cli": ">=0.30.0",
+    "@graphprotocol/graph-ts": ">=0.27.0"
   }
 }

@@ -237,6 +237,14 @@ export class PriceOracle__anchorsResult {
     map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
     return map;
   }
+
+  getPeriod(): BigInt {
+    return this.value0;
+  }
+
+  getPriceMantissa(): BigInt {
+    return this.value1;
+  }
 }
 
 export class PriceOracle extends ethereum.SmartContract {
